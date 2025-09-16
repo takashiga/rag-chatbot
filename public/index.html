@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Azure OpenAI チャットボット</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Highlight.js -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
+  <style>
+    body { background-color: #f8f9fa; }
+    #chat-box {
+      height: 60vh;
+      overflow-y: auto;
+      border: 1px solid #dee2e6;
+      padding: 15px;
+      background-color: #fff;
+      border-radius: 5px;
+    }
+    .message.user { text-align: right; color: #0d6efd; margin-bottom: 10px; }
+    .message.bot { text-align: left; color: #198754; margin-bottom: 10px; }
+    .copy-btn {
+      position: absolute;
+      top: 5px;
+      right: 10px;
+      z-index: 10;
+    }
+    pre { position: relative; }
+    @media (max-width: 576px) {
+      #chat-box { height: 50vh; font-size: 0.95rem; }
+      .copy-btn { font-size: 0.75rem; padding: 2px 6px; }
+    }
+  </style>
+</head>
+<body class="container py-4">
+  <h2 class="mb-4 text-center">💬 Azure OpenAI チャットボット</h2>
+
+  <div id="chat-box" class="mb-3"></div>
+
+  <div class="row g-2">
+    <div class="col-9 col-sm-10">
+      <input type="text" id="message" class="form-control" placeholder="メッセージを入力">
+    </div>
+    <div class="col-3 col-sm-2">
+      <button class="btn btn-primary w-100" onclick="sendMessage()">送信</button>
+    </div>
+  </div>
+
+  <div class="text-end mt-3">
+    <button class="btn btn-danger btn-sm" onclick="clearHistory()">履歴を消す</button>
+  </div>
+
+  <!-- ライブラリ -->
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
