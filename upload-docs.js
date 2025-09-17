@@ -1,48 +1,60 @@
-require("dotenv").config();
+const fs = require("fs");
+const path = require("path");
 const axios = require("axios");
+require("dotenv").config();
 
-// 環境変数から設定を読み込む
-const endpoint = process.env.AZURE_SEARCH_ENDPOINT;
-const indexName = process.env.AZURE_SEARCH_INDEX;
-const apiKey = process.env.AZURE_SEARCH_API_KEY;
+// 環境変数の読み込み
+const SEARCH_ENDPOINT = process.env.AZURE_SEARCH_ENDPOINT;
+const SEARCH_API_KEY = process.env.AZURE_SEARCH_API_KEY;
+const SEARCH_INDEX = process.env.AZURE_SEARCH_INDEX;
 
-// 登録する文書（自由に追加OK）
-const documents = [
-  {
-    id: "doc001",
-    name: "Azure Cognitive Searchとは？",
-    content:
-      "Azure Cognitive Searchは、構造化および非構造化データに対して強力な検索機能を提供するクラウドサービスです。",
-  },
-  {
-    id: "doc002",
-    name: "OpenAIの使い方",
-    content: "Azure OpenAIを使えば、GPTモデルをAPI経由で安全に利用できます。",
-  },
-  {
-    id: "doc003",
-    name: "RAGとは？",
-    content:
-      "RAG（検索拡張生成）は、検索結果をもとに生成AIが回答する手法です。",
-  },
-];
+const OPENAI_ENDPOINT = process.env.AZURE_OPENAI_ENDPOINT;
+const OPENAI_API_KEY = process.env.AZURE_OPENAI_API_KEY;
+const EMBEDDING_DEPLOYMENT = process.env.AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME;
+const OPENAI_API_VERSION = process.env.AZURE_OPENAI_API_VERSION;
 
-async function uploadDocuments() {
-  try {
-    const response = await axios.post(
-      `${endpoint}/indexes/${indexName}/docs/index?api-version=2023-07-01-Preview`,
-      { value: documents },
+const folderPath = path.join(__dirname, "docs", "ikoralove");
+const files = fs.readdirSync(folderPath);
+
+(async () => {
+  for (let i = 0; i < files.length; i++) {
+    const filename = files[i];
+    const filePath = path.join(folderPath, filename);
+    const content = fs.readFileSync(filePath, "utf-8");
+
+    // 🔹 Step 1: ベクトル生成
+    const embeddingResponse = await axios.post(
+      `${OPENAI_ENDPOINT}/openai/deployments/${EMBEDDING_DEPLOYMENT}/embeddings?api-version=${OPENAI_API_VERSION}`,
+      { input: content },
       {
         headers: {
           "Content-Type": "application/json",
-          "api-key": apiKey,
+          "api-key": OPENAI_API_KEY,
         },
       }
     );
-    console.log("✅ 文書登録完了:", response.data);
-  } catch (error) {
-    console.error("❌ 文書登録失敗:", error.response?.data || error.message);
-  }
-}
 
-uploadDocuments();
+    const vector = embeddingResponse.data.data[0].embedding;
+
+    // 🔹 Step 2: ドキュメント構造
+    const doc = {
+      id: `ikoralove_${i + 1}`,
+      content: content,
+      embedding: vector,
+    };
+
+    // 🔹 Step 3: Azure Search に登録
+    await axios.post(
+      `${SEARCH_ENDPOINT}/indexes/${SEARCH_INDEX}/docs/index?api-version=2023-07-01-Preview`,
+      { value: [doc] },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "api-key": SEARCH_API_KEY,
+        },
+      }
+    );
+
+    console.log(`✅ 登録完了: ${filename}`);
+  }
+})();

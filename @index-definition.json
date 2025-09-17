@@ -1,0 +1,33 @@
+{
+  "name": "rag-chatbot-index",
+  "fields": [
+    { "name": "id", "type": "Edm.String", "key": true, "searchable": true },
+    { "name": "name", "type": "Edm.String", "searchable": true },
+    { "name": "content", "type": "Edm.String", "searchable": true },
+    {
+      "name": "content_vector",
+      "type": "Collection(Edm.Single)",
+      "searchable": false,
+      "vectorSearchConfiguration": "default"
+    }
+  ],
+  "vectorSearch": {
+    "algorithms": [
+      {
+        "name": "default-algorithm",
+        "kind": "hnsw",
+        "parameters": {
+          "m": 4,
+          "efConstruction": 400,
+          "efSearch": 500
+        }
+      }
+    ],
+    "profiles": [
+      {
+        "name": "default",
+        "algorithm": "default-algorithm"
+      }
+    ]
+  }
+}
