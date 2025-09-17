@@ -1,15 +1,21 @@
 const express = require("express");
 const axios = require("axios");
+const path = require("path");
 require("dotenv").config();
 
 const app = express();
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "public"))); // ← これで index.html を返せる
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 app.post("/chat", async (req, res) => {
   const userMessage = req.body.message;
 
   try {
-    // 🔹 Step 1: クエリをベクトル化
+    // ベクトル生成
     const embeddingResponse = await axios.post(
       `${process.env.AZURE_OPENAI_ENDPOINT}/openai/deployments/${process.env.AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME}/embeddings?api-version=${process.env.AZURE_OPENAI_API_VERSION}`,
       { input: userMessage },
@@ -23,7 +29,7 @@ app.post("/chat", async (req, res) => {
 
     const queryVector = embeddingResponse.data.data[0].embedding;
 
-    // 🔹 Step 2: Azure Search にベクトル検索クエリを送信
+    // ベクトル検索
     const searchResponse = await axios.post(
       `${process.env.AZURE_SEARCH_ENDPOINT}/indexes/${process.env.AZURE_SEARCH_INDEX}/docs/search?api-version=2023-07-01-Preview`,
       {
@@ -45,7 +51,7 @@ app.post("/chat", async (req, res) => {
       .map((doc) => doc.content)
       .join("\n---\n");
 
-    // 🔹 Step 3: GPT に検索結果とユーザーの質問を渡して応答生成
+    // GPT応答生成
     const completionResponse = await axios.post(
       `${process.env.AZURE_OPENAI_ENDPOINT}/openai/deployments/${process.env.AZURE_OPENAI_CHAT_DEPLOYMENT_NAME}/chat/completions?api-version=${process.env.AZURE_OPENAI_API_VERSION}`,
       {
